@@ -1,4 +1,5 @@
 # How to run the code
+Forked from: Bjoern Wendland
 
 1. `source setup.sh` 
 2. `make`

@@ -54,7 +54,7 @@ def totalMCgen(lumi, key, stype,campaign, selection, channel):
         if "data" in sample or "MC" in sample: continue
         tfile = ROOT.TFile("../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample))
         if(not tfile.Get("MCLumi")):
-          debug_message(1, "totalMCgen:tfile", "../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample))
+          debug_message(1, "totalMCgen:tfile", "../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample)+"   MCLumi not found")
           continue
         MCLumi = tfile.Get("MCLumi").GetBinContent(1)
         MCHist = tfile.Get(key)

@@ -11,6 +11,10 @@ from functools import partial
 from array import array
 import numpy as np
 
+def debug_message(debug_level, function, debug_msg):
+	if debug_level==0 : print("==INFO::{0}       {1}".format(function,debug_msg))
+	if debug_level==1 : print("==WARNING::{0}       {1}".format(function,debug_msg))
+
 def legend(key):
     if "met" in key: return "#it{E}_{T}^{miss} [GeV]"
     elif "mt" in key: return "#it{m}_{T}^{l+#nu} [GeV]"
@@ -84,6 +88,10 @@ def plotting(campaign, selection, channel, stype):
             if "data" in sample or "MC" in sample: continue
 
             tfile = ROOT.TFile("../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample))
+            if(not tfile.Get("MCLumi")):
+              debug_message(1, "plotting:tfile", "../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample)+"   MCLumi not found")
+              continue
+
             MCLumi = tfile.Get("MCLumi").GetBinContent(1)
             MCHist = tfile.Get(key.GetName())
             MCHist.Scale(lumi/MCLumi)
@@ -131,12 +139,18 @@ def plotting(campaign, selection, channel, stype):
         ROOT.myText(0.60, 0.84,ROOT.kBlack, "13 TeV, 140 fb^{-1}")
         ROOT.myText(0.60,0.79,ROOT.kBlack, qt+channeltag+", "+rt)
         ROOT.myMarkerText(0.65, 0.74,  ROOT.kBlack,20, "data", 2)
-        ROOT.myBoxText(0.65,0.70 , 0.03, color_wjets.GetNumber(), color_wjets.GetNumber(), "#it{W}+jets")
-        ROOT.myBoxText(0.65,0.66 , 0.03, color_zjets.GetNumber(), color_zjets.GetNumber(), "#it{Z}+jets")
-        ROOT.myBoxText(0.65,0.62 , 0.03, color_tchan.GetNumber(), color_tchan.GetNumber(), "#it{t}#it{q}")
-        ROOT.myBoxText(0.80,0.70 , 0.03, color_ttbar.GetNumber(), color_ttbar.GetNumber(), "#it{t}#it{#bar{t}}")
-        ROOT.myBoxText(0.80,0.66 , 0.03, color_sgtop.GetNumber(), color_sgtop.GetNumber(), '#it{t}#it{W}+#it{t}#it{b}')
-        ROOT.myBoxText(0.80,0.62 , 0.03, color_diboson.GetNumber(), color_diboson.GetNumber(), '#it{V}#it{V}')
+        #ROOT.myBoxText(0.65,0.70 , 0.03, color_wjets.GetNumber(), color_wjets.GetNumber(), "#it{W}+jets")
+        #ROOT.myBoxText(0.65,0.66 , 0.03, color_zjets.GetNumber(), color_zjets.GetNumber(), "#it{Z}+jets")
+        #ROOT.myBoxText(0.65,0.62 , 0.03, color_tchan.GetNumber(), color_tchan.GetNumber(), "#it{t}#it{q}")
+        #ROOT.myBoxText(0.80,0.70 , 0.03, color_ttbar.GetNumber(), color_ttbar.GetNumber(), "#it{t}#it{#bar{t}}")
+        #ROOT.myBoxText(0.80,0.66 , 0.03, color_sgtop.GetNumber(), color_sgtop.GetNumber(), '#it{t}#it{W}+#it{t}#it{b}')
+        ROOT.myBoxText(0.65,0.70 , 0.03, color_wjets.GetNumber(), "#it{W}+jets")
+        ROOT.myBoxText(0.65,0.66 , 0.03, color_zjets.GetNumber(), "#it{Z}+jets")
+        ROOT.myBoxText(0.65,0.62 , 0.03, color_tchan.GetNumber(), "#it{t}#it{q}")
+        ROOT.myBoxText(0.80,0.70 , 0.03, color_ttbar.GetNumber(), "#it{t}#it{#bar{t}}")
+        ROOT.myBoxText(0.80,0.66 , 0.03, color_sgtop.GetNumber(), '#it{t}#it{W}+#it{t}#it{b}')
+
+        ROOT.myBoxText(0.80,0.62 , 0.03, color_diboson.GetNumber(), '#it{V}#it{V}')
         pad1.RedrawAxis()
         pad2.cd()
         pad2.SetRightMargin(0.05)
@@ -197,8 +211,11 @@ def ProcYield(campaign, selection, channel, stype):
             sample = "{}.root".format(mcID)
             if "data" in sample or "MC" in sample: continue
 
-            print("../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample))
             tfile = ROOT.TFile("../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample))
+            if(not tfile.Get("MCLumi")):
+              debug_message(1, "ProcYield:tfile", "../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/{}".format(sample)+"   MCLumi not found")
+              continue
+
             MCLumi = tfile.Get("MCLumi").GetBinContent(1)
             MCLumiUnc = tfile.Get("MCLumi").GetBinError(1)
             MCHist = tfile.Get("leta_kin")
@@ -231,7 +248,7 @@ def ProcYield(campaign, selection, channel, stype):
 def main(merge, campaign, nworkers, selection, channel, stype):
     selection = "Efficiencies_Selection_"+selection
     if merge == "yes": merger(nworkers, stype, campaign, selection, channel)
-    #plotting(campaign, selection, channel, stype)
+    plotting(campaign, selection, channel, stype)
     ProcYield(campaign, selection, channel, stype)
 
 
