@@ -22,7 +22,7 @@ def process(ftp, stype, campaign, selection, channel):
 @click.command()
 @click.option("--campaign", required=True, type=click.Choice(["mc16a","mc16d", "mc16e", "fR2"]), help="Specify the campaign that you want to process")
 @click.option("--nworkers", default=1, required=False, help="Specify the number of workers that you want to use for processing")
-@click.option("--selection", required=True,type=click.Choice(["4jgt1b70","1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
+@click.option("--selection", required=True,type=click.Choice(["4jgt1b70","4jgt1b85" ,"1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
 @click.option("--channel", required=True, type=click.Choice(["el","mu"]), help="Selection electron or muon channel")
 @click.option("--stype", required=True, type=click.Choice(["real","fake"]), help="Process real or fake Ntuples")
 def main(campaign, nworkers, selection, channel, stype):
@@ -36,11 +36,15 @@ def main(campaign, nworkers, selection, channel, stype):
         ftp = []  # files to process
         os.system(f"mkdir -p ../ohists/{stype}/{camp}/{selection}_{channel}")
         os.system(f"rm -rf ../ohists/{stype}/{camp}/{selection}_{channel}/*")
+        sample_counter = 0
         for sample in os.listdir(f"{indir}/{camp}"):
-            mcID = 0 
+            mcID = 0
             if not "AllYear" in sample: mcID = int(sample.split(".")[2])
-            if "grp16" in sample: mcID = 1
+            #if "grp16" in sample: mcID = 1
+            if "data16_13TeV" in sample: mcID = 1
             if mcID==410389 or (mcID>=364522 and mcID<=364535) or (mcID>=366140 and mcID<=366154): continue
+            sample_counter = sample_counter + 1
+            #print("=== INFO          sample:            {0}  {1}".format(sample_counter, sample))
             for tfile in os.listdir(f"{indir}/{camp}/{sample}"):
                 ftp.append([f"{indir}/{camp}/{sample}/{tfile}", mcID, tfile.split("_")[-1].split(".")[0]])
         now = datetime.now()
