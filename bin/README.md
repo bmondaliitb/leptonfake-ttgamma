@@ -1,8 +1,18 @@
 # How to run the code
 Forked from: Bjoern Wendland
 
-1. `source setup.sh` 
-2. `make`
-3. `python 01_starter.py --campaign <> --nworkers <> --selection <> --channel <> --stype <>` use `python 01_starter.py --help` for help 
-4. `python 02_plotter.py --merge <> --campaign <> --nworkers <> --selection <> --channel <> --stype <>` use `python 02_plotter.py --help` for help
-5. `python 03_dataMCPlotter.py --merge <> --campaign <> --nworkers <> --selection <> --channel <> --stype <>` use `python 03_dataMCPlotter.py --help` for help
+
+To run:
+   * modify input file path in the 00_setup.sh
+     - in input path location folder structure should be 
+       ```
+       /mc16a /mc16d /mc16e
+       under this folders you can keeps samples downloaded from the grid (its fine if it the samples are in folders)
+
+       ```
+   * to change the selection for example met cut, edit the met cut in the ../include/parallelProc.C file
+   * **don't forget to build by running make**
+   
+   `source  00_setup.sh`
+   ` make`
+   ` source whole_process_fake.sh` **change which selection region to use(1bgt70...)**
