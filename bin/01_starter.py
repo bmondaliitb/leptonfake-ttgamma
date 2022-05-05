@@ -22,7 +22,7 @@ def process(ftp, stype, campaign, selection, channel):
 @click.command()
 @click.option("--campaign", required=True, type=click.Choice(["mc16a","mc16d", "mc16e", "fR2"]), help="Specify the campaign that you want to process")
 @click.option("--nworkers", default=1, required=False, help="Specify the number of workers that you want to use for processing")
-@click.option("--selection", required=True,type=click.Choice(["4jgt1b70","4jgt1b85" ,"1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
+@click.option("--selection", required=True,type=click.Choice(["4jgt1b77","4jgt1b70","1jgt1b77","1jgt1b70","4jgt1b85" ,"1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
 @click.option("--channel", required=True, type=click.Choice(["el","mu"]), help="Selection electron or muon channel")
 @click.option("--stype", required=True, type=click.Choice(["real","fake"]), help="Process real or fake Ntuples")
 def main(campaign, nworkers, selection, channel, stype):

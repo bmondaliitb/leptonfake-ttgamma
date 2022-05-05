@@ -1,0 +1,54 @@
+>>>>>>>>>>>>>>>>>>electron   pt:dPhi
+
+Applying ATLAS style settings...
+
+
+Processing /afs/cern.ch/work/b/bmondal/Macros/getIntegralRoot.C("./ejet/histograms.data.AlgDefault.root", "h_el_pt_up",1)...
+Integral of the histogral is: 693.506 +- 47.6418
+ calculated other way   
+---------------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>electron   pt:mtw
+
+Applying ATLAS style settings...
+
+
+Processing /afs/cern.ch/work/b/bmondal/Macros/getIntegralRoot.C("./ejet/histograms.data.AlgDefault.root", "h_el_pt_nominal",1)...
+Integral of the histogral is: 448.317 +- 41.9128
+ calculated other way   
+---------------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>electron   pt:eta
+
+Applying ATLAS style settings...
+
+
+Processing /afs/cern.ch/work/b/bmondal/Macros/getIntegralRoot.C("./ejet/histograms.data.AlgDefault.root", "h_el_pt_down",1)...
+Integral of the histogral is: 413.726 +- 31.0135
+ calculated other way   
+---------------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>muon    pt:mtw
+
+Applying ATLAS style settings...
+
+
+Processing /afs/cern.ch/work/b/bmondal/Macros/getIntegralRoot.C("./mujet/histograms.data.AlgDefault.root", "h_mu_pt_up",1)...
+Integral of the histogral is: 241.633 +- 21.6518
+ calculated other way   
+---------------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>muon    pt:eta
+
+Applying ATLAS style settings...
+
+
+Processing /afs/cern.ch/work/b/bmondal/Macros/getIntegralRoot.C("./mujet/histograms.data.AlgDefault.root", "h_mu_pt_nominal",1)...
+Integral of the histogral is: 114.777 +- 22.9671
+ calculated other way   
+---------------------------------------------------------------------------------------------
+>>>>>>>>>>>>>>>>>>muon    pt:dPhi
+
+Applying ATLAS style settings...
+
+
+Processing /afs/cern.ch/work/b/bmondal/Macros/getIntegralRoot.C("./mujet/histograms.data.AlgDefault.root", "h_mu_pt_down",1)...
+Integral of the histogral is: 91.0831 +- 13.7914
+ calculated other way   
+---------------------------------------------------------------------------------------------

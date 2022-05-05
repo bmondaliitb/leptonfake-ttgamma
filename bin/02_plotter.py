@@ -5,12 +5,9 @@ import os, sys,ROOT
 import click
 import numpy as np
 import multiprocessing as mp
-#from tqdm import tqdm
 from tqdm.auto import tqdm
 from functools import partial
 from array import array
-import numpy as np
-
 
 def debug_message(debug_level, function, debug_msg):
 	if debug_level==0 : print("==INFO::{0}       {1}".format(function,debug_msg))
@@ -29,7 +26,7 @@ def merge(sample, stype,campaign, selection, channel):
         datahadd = "hadd -f ../ohists/{}/{}/{}_{}/merged/data.root ".format(stype,campaign, selection, channel)
         for indir in indirs:
             datahadd += "{}/{}/*.root ".format(indir,sample)
-            #if "mc16a" in indir: datahadd += "{}/1/*.root ".format(indir)
+            if "mc16a" in indir: datahadd += "{}/1/*.root ".format(indir)
         os.system("{} > ../logs_merger/{}.log 2>&1".format(datahadd,sample))
 
 def merger(nworkers, stype, campaign, selection, channel):
@@ -67,6 +64,14 @@ def totalMCgen(lumi, key, stype,campaign, selection, channel):
             totalHistMC.Add(MCHist)
     return totalHistMC
 
+#def efficiency(data_tight, mc_tight, data, mc):
+#    data_tight_integral = data_tight.Integral() + data_tight.GetBinContent(data_tight.GetNbinsX()+1)
+#    mc_tight_integral = mc_tight.Integral() + mc_tight.GetBinContent(mc_tight.GetNbinsX()+1)
+#    data_integral = data.Integral() + data.GetBinContent(data.GetNbinsX()+1)
+#    mc_integral = mc.Integral() + mc.GetBinContent(mc.GetNbinsX()+1)
+#    scale_factor = (data_tight_integral - mc_tight_integral)/(data_integral - mc_integral)
+#    print("Scale Factor Buddha {} ".format(scale_factor))
+
 
 def fakeEff(merge, campaign, nworkers, selection, channel, stype):
     data = ROOT.TFile("../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/data.root")
@@ -87,13 +92,13 @@ def fakeEff(merge, campaign, nworkers, selection, channel, stype):
     ROOT.gStyle.SetPaintTextFormat(".2f")
 
 
-    for key in data.GetListOfKeys():
-        if "MCLumi" in key.GetName() or "Tight" in key.GetName(): continue
-        tightName = key.GetName()+"_Tight"
-        dataHist = data.Get(key.GetName())
-        dataTightHist = data.Get(tightName)
-        MCHist = totalMCgen(lumi,key.GetName(), stype, campaign,selection, channel)
-        MCTightHist = totalMCgen(lumi,tightName, stype, campaign, selection, channel)
+    for key in data.GetListOfKeys(): # loop over the histogram objects in the data
+        if "MCLumi" in key.GetName() or "Tight" in key.GetName(): continue # don't use the tight objects in the data
+        tightName = key.GetName()+"_Tight" # tight hist name
+        dataHist = data.Get(key.GetName()) # get the hist
+        dataTightHist = data.Get(tightName) # get the tight hist
+        MCHist = totalMCgen(lumi,key.GetName(), stype, campaign,selection, channel) # MCHist
+        MCTightHist = totalMCgen(lumi,tightName, stype, campaign, selection, channel) # MCTightHist
         if not "2D" in key.GetName():
             print("datayield: {}".format(dataHist.Integral()+dataHist.GetBinContent(dataHist.GetNbinsX()+1)))
             print("MCyield: {}".format(MCHist.Integral()+MCHist.GetBinContent(MCHist.GetNbinsX()+1)))
@@ -128,7 +133,8 @@ def fakeEff(merge, campaign, nworkers, selection, channel, stype):
             fakeHist.Add(MCHist, -1)
             fakeTightHist = dataTightHist.Clone("lfake_"+key.GetName()+"_Tight")
             fakeTightHist.Add(MCTightHist, -1)
-            fakeTightHist.Divide(fakeHist)
+            #efficiency(dataTightHist, MCTightHist, dataHist, MCHist)  
+            fakeTightHist.Divide(fakeHist)  # efficiency calculation
             canv = ROOT.TCanvas("","",1600,1200)
             fakeTightHist.SetXTitle(fakeTightHist.GetTitle())
             fakeTightHist.Draw("Hist,E1")
@@ -151,7 +157,7 @@ def fakeEff(merge, campaign, nworkers, selection, channel, stype):
             if channel == "el":
                 fakeTightHist.Divide(fakeHist)
             else:
-                xbinning = [27.,35.,45., 52.,60.]
+                xbinning = [27.,35., 45, 52.,60.]
                 ybinning = [0.,7.,15.,25.]
                 ft = ROOT.TH2F("lfake_"+key.GetName()+"_TightRebin", "", len(xbinning)-1, array('d', xbinning),len(ybinning)-1, array('d', ybinning))
                 mt = ROOT.TH2F(key.GetName()+"_mtRebin", "", len(xbinning)-1, array('d', xbinning),len(ybinning)-1, array('d', ybinning))
@@ -163,6 +169,14 @@ def fakeEff(merge, campaign, nworkers, selection, channel, stype):
 
                         mt.SetBinContent(xybin, mt.GetBinContent(xybin)+fakeHist.GetBinContent(x+1,y+1))
                         mt.SetBinError(xybin, np.sqrt(mt.GetBinError(xybin)**2+fakeHist.GetBinError(x+1,y+1)**2))
+		# correct the overflow bins; add those numbers to the last bins
+		#lastxybin = ft.FindBin(fakeTightHist.GetXaxis().GetBinCenter(fakeTightHist.GetNbinsX()), fakeTightHist.GetYaxis().GetBinCenter(fakeTightHist.GetNbinsY()))
+                #ft.SetBinContent(lastxybin, ft.GetBinContent(xybin)+fakeTightHist.GetBinContent(x+1,y+1))
+                #ft.SetBinError(lastxybin, np.sqrt(ft.GetBinError(xybin)**2+fakeTightHist.GetBinError(x+1,y+1)**2))
+
+                #mt.SetBinContent(xybin, mt.GetBinContent(xybin)+fakeHist.GetBinContent(x+1,y+1))
+                #mt.SetBinError(xybin, np.sqrt(mt.GetBinError(xybin)**2+fakeHist.GetBinError(x+1,y+1)**2))
+	
                 ft.Divide(mt)
                 fakeTightHist.Divide(fakeHist)
 
@@ -174,16 +188,17 @@ def fakeEff(merge, campaign, nworkers, selection, channel, stype):
             fakeTightHist.SetXTitle("#it{p}_{T}^{l} [GeV]")
             fakeTightHist.SetYTitle("#it{m}_{T}^{l+#nu} [GeV]")
             fakeTightHist.Draw("colz,text,error")
+
             ROOT.gStyle.SetTextSize(0.05)
             ROOT.ATLASLabel(0.15, 0.94, "Internal")
             ROOT.gStyle.SetTextSize(0.04)
-            ROOT.myText(0.65, 0.86,ROOT.kBlack, "13 TeV, 140 fb^{-1}")
+            ROOT.myText(0.65, 0.86,ROOT.kBlack, 0.025,"13 TeV, 139 fb^{-1}")
             efficiencyTag = "Fake muon efficiencies (data)"
             if channel == "el": efficiencyTag = "Fake electron efficiencies (data)"
-            selectionTag = "1b70"
+            selectionTag = "1b77"
             if "0b70" in selection: selectionTag = "0b701b85"
-            ROOT.myText(0.15, 0.90,ROOT.kBlack, selectionTag)
-            ROOT.myText(0.15, 0.86,ROOT.kBlack, efficiencyTag)
+            ROOT.myText(0.15, 0.90,ROOT.kBlack,0.025, selectionTag)
+            ROOT.myText(0.15, 0.86,ROOT.kBlack,0.025, efficiencyTag)
             canv.SaveAs("../kinDists/{}/{}/{}_{}/{}_TightFakeEff.pdf".format(stype,campaign,selection,channel,key.GetName()))
             del canv
 
@@ -198,22 +213,22 @@ def fakeEff(merge, campaign, nworkers, selection, channel, stype):
             ROOT.gStyle.SetTextSize(0.05)
             ROOT.ATLASLabel(0.15, 0.94, "Simulation Internal")
             ROOT.gStyle.SetTextSize(0.04)
-            ROOT.myText(0.65, 0.87,ROOT.kBlack, "13 TeV, 140 fb^{-1}")
+            ROOT.myText(0.65, 0.87,ROOT.kBlack, 0.025,"13 TeV, 139 fb^{-1}")
             efficiencyTag = "Real muon efficiencies (MC)"
             if channel == "el": efficiencyTag = "Real electron efficiencies (MC)"
-            ROOT.myText(0.15, 0.87,ROOT.kBlack, efficiencyTag)
+            ROOT.myText(0.15, 0.87,ROOT.kBlack, 0.025,efficiencyTag)
             canv.SaveAs("../kinDists/{}/{}/{}_{}/{}_TightRealEff.pdf".format(stype,campaign, selection,channel,key.GetName()))
             del canv
             EffFile = ROOT.TFile("../EfficiencyMaps/{}/{}/{}_{}/{}.root".format(stype,campaign, selection,channel,key.GetName()), "RECREATE")
             realHistTight.Write()
             fakeTightHist.Write()
-            print("Buddha")
 
             EffFile.Write()
             EffFile.Close()
 
 def realEff(merge, campaign, nworkers, selection, channel, stype):
     MC = ROOT.TFile("../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/410470.root")
+    debug_message(0, "realEff", "../ohists/{}/{}/".format(stype,campaign)+selection+"_"+channel+"/merged/410470.root")
     os.system("mkdir -p ../EfficiencyMaps/{}/{}/".format(stype, campaign)+selection+"_"+channel)
     os.system("mkdir -p ../kinDists/{}/{}/".format(stype,campaign)+selection+"_"+channel)
     lumi = 36207.66
@@ -279,7 +294,7 @@ def realEff(merge, campaign, nworkers, selection, channel, stype):
 @click.option("--merge", default="no",type=click.Choice(["yes", "no"]) ,help="Should the files be merged")
 @click.option("--campaign", required=True, type=click.Choice(["mc16a","mc16d", "mc16e", "fR2"]), help="Specify the campaign and choose between mc16[a,d,e]")
 @click.option("--nworkers", default=1, help="Specify the number of workers used for merging")
-@click.option("--selection", required=True,type=click.Choice(["4jgt1b70", "1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
+@click.option("--selection", required=True,type=click.Choice(["4jgt1b77","4jgt1b70","1jgt1b77","1jgt1b70", "4jgt1b85", "1j1b77","1j1b771b85", "1j0b701b85","1j1b772b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
 @click.option("--channel", required=True, type=click.Choice(["el","mu"]),  help="Selection electron or muon channel")
 @click.option("--stype", required=True, type=click.Choice(["real","fake"]), help="Process real or fake Ntuples")
 

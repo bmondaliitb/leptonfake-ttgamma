@@ -1,0 +1,72 @@
+import sys
+sys.path.append('/afs/cern.ch/work/b/bmondal/python_packages/tqdm')
+
+import os,sys,click 
+import multiprocessing as mp
+from functools import partial
+#from tqdm import tqdm
+from tqdm.auto import tqdm
+import multiprocessing as mp
+from datetime import datetime
+
+def debug_message(debug_level, message):
+    if debug_level==0: print("=== INFO:               " + message)
+
+def process(ftp, stype, campaign, selection, channel):
+    os.system("mkdir -p ../ohists/{0}/{1}/{2}_{3}/{4}".format(stype, campaign, selection, channel, ftp[1]))
+    os.system("mkdir -p ../logs/{0}/{1}/{2}_{3}/{4}".format(stype, campaign, selection, channel, ftp[1]))
+    if "Efficiencies" in selection: 
+        os.system("parallelProc.exe {0} {1} {2} {3} {4} {5} {6} > ../logs/{0}/{1}/{2}_{3}/{4}/{5}.log 2>&1".format(stype, campaign, selection,channel, ftp[0], ftp[1], ftp[2]))
+    else: 
+        print("Currently not supported! \n Exiting.")
+        sys.exit(1)
+        os.system( "parallelProc.exe "+campaign+" "+ selection+" "+ channel+" "+ ftp[0]+" "+ ftp[1]+ " "+ ftp[2]+ " > ../logs/"+selection+"_"+channel+"/"+ftp[1]+"/"+ftp[2]+"."+"log"+" 2>&1")
+        
+@click.command()
+@click.option("--campaign", required=True, type=click.Choice(["mc16a","mc16d", "mc16e", "fR2"]),help="Specify the campaign that you want to process")
+@click.option("--nworkers", default=1, required=False, help="Specify the number of workers that you want to use for processing")
+@click.option("--selection", required=True,type=click.Choice(["Selection_4jgt1b70","4jgt1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
+@click.option("--channel", required=True, type=click.Choice(["el","mu"]), help="Selection electron or muon channel")
+@click.option("--stype", required=True, type=click.Choice(["real","fake"]), help="Process real or fake Ntuples")
+
+
+
+# main function
+def main(campaign, nworkers, selection, channel, stype):
+    selection = "Efficiencies_Selection_"+selection
+    campaigns = [campaign]
+    if "fR2" == campaign: campaigns = ["mc16a","mc16d", "mc16e"]
+    for camp in campaigns:
+        print("Preparing run for {camp}")
+        indir = os.environ["LFAKEDIR"]
+        if stype == "real": indir = os.environ["REALDIR"]
+        ftp = []  # files to process
+        os.system("mkdir -p ../ohists/{0}/{1}/{2}_{3}".format(stype, camp, selection, channel))
+        os.system("rm -rf ../ohists/{0}/{1}/{2}_{3}/*".format(stype, camp, selection, channel))
+        debug_message(0, "indir: "+indir)
+        debug_message(0, "camp: "+camp)
+        for sample in os.listdir(indir+"/"+camp):
+            mcID = 0 
+            if not "AllYear" in sample: mcID = int(sample.split(".")[2])
+            if "grp16" in sample: mcID = 1
+            if mcID==410389 or (mcID>=364522 and mcID<=364535) or (mcID>=366140 and mcID<=366154): continue
+            #for tfile in os.listdir("{0}/{1}/{2}".format(indir,camp,sample)):
+            for tfile in os.listdir("{0}/{1}".format(indir,camp,sample)):
+                #ftp.append(["{0}/{1}/{2}/{3}".format(indir, camp, sample, tfile), mcID, tfile.split("_")[-1].split(".")[0]])
+                ftp.append(["{0}/{1}/{2}/{3}".format(indir, camp, sample, tfile), mcID, tfile.split("_")[-1].split(".")[0]])
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print("Finished preparation. Starting at: {}".format(current_time))
+        print("Processing {0} files for {1} with {2} workers".format(len(ftp), camp, nworkers))
+        p = mp.Pool(nworkers)
+        for _ in tqdm(p.imap_unordered(partial(process, stype=stype, campaign=camp, selection=selection, channel=channel), ftp), total=len(ftp)):
+            pass
+        p.close()
+        p.join()
+        now = datetime.now()
+        current_time = now.strftime("%H:%M:%S")
+        print("Successfully finished at: {current_time}")
+        print("------------------------------------------------------")
+    
+if __name__ == "__main__":
+    main()

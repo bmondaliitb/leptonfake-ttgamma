@@ -61,7 +61,7 @@ def plotting(campaign, selection, channel, stype):
     ROOT.gROOT.LoadMacro(os.environ["ATLAS_STYLE_PATH"]+"/AtlasLabels.C")
 
     ROOT.SetAtlasStyle()
-    sampleList = [363355,363356,363357,363358,363359, 363360, 363489, 364250,364253, 364254, 364255]+[410644,410645,410646,410647]+[410470]+[410658,410659]+[x for x in range(364100,364142)]+[x for x in range(364156,364198)]
+    sampleList = [363355,363356,363357,363358,363359, 363360, 363489, 364250,364253, 364254, 364255]+[410644,410645,410646,410647]+[410470]+[410658,410659]+[410155, 410156, 410157, 410218, 410219, 410220]+[x for x in range(364100,364142)]+[x for x in range(364156,364198)]
 
     color_lfake = ROOT.TColor(3./252., 252./252., 232./252.)
     color_diboson = ROOT.TColor(238.0/255,31.0/255,96.0/255)
@@ -71,6 +71,7 @@ def plotting(campaign, selection, channel, stype):
     #color_zjetsgamma = ROOT.TColor(0,169.0/255,183.0/255)
     #color_wjetsgamma =ROOT.TColor(255.0/255,214.0/255,0)
     #color_ttgamma = ROOT.TColor(87.0/255,157.0/255,66.0/255)
+    color_ttv = ROOT.TColor(87.0/255,157.0/255,66.0/255)
     color_ttbar =ROOT.TColor(1., 0, 0)
     color_tchan = ROOT.TColor(214.0/255,210.0/255,196.0/255)
     lumi = 36207.66
@@ -94,12 +95,23 @@ def plotting(campaign, selection, channel, stype):
 
             MCLumi = tfile.Get("MCLumi").GetBinContent(1)
             MCHist = tfile.Get(key.GetName())
+            #if "999999" in sample:
+            #  if "Tight" in key.GetName():
+            #    print("Buddha MCHist: {}".format(key.GetName()[:-6]))
+            #    MCHist = tfile.Get(key.GetName()[:-6])
+            #    print("Buddha MCHist: {}".format(key.GetName()[:-6]))
+            #else:
+            #MCHist = tfile.Get(key.GetName())
+
+            #if not "999999" in sample: MCHist.Scale(lumi/MCLumi)
             MCHist.Scale(lumi/MCLumi)
             color = None
             sample = sample.replace(".root", "")
             if "410470" in sample: color =  color_ttbar
             elif "410658" in sample or "410659" in sample: color =  color_tchan
             elif sample in ["410644", "410645", "410646", "410647"]: color =  color_sgtop
+            elif sample in ["410155", "410156", "410157", "410218", "410219", "410220"]: color =  color_ttv
+            #elif sample in ["999999"]: color =  color_lfake
             elif int(sample) in range(364156,364198): color =  color_wjets
             elif int(sample) in range(364100,364142): color =  color_zjets
             elif sample in ["363355","363356","363357","363358","363359", "363360", "363489", "364250","364253", "364254", "364255"]: color =  color_diboson
@@ -134,10 +146,10 @@ def plotting(campaign, selection, channel, stype):
         if "mu" in channel: channeltag = "muon"
         qt = "loose "
         if "Tight" in key.GetName(): qt = "tight "
-        rt = "1b70"
+        rt = "1b77"
         if "1b85" in selection: rt = "0b701b85"
-        ROOT.myText(0.60, 0.84,ROOT.kBlack, "13 TeV, 140 fb^{-1}")
-        ROOT.myText(0.60,0.79,ROOT.kBlack, qt+channeltag+", "+rt)
+        ROOT.myText(0.60, 0.84,ROOT.kBlack, 0.025, "13 TeV, 139 fb^{-1}")
+        ROOT.myText(0.60,0.79,ROOT.kBlack, 0.025, qt+channeltag+", "+rt)
         ROOT.myMarkerText(0.65, 0.74,  ROOT.kBlack,20, "data", 2)
         #ROOT.myBoxText(0.65,0.70 , 0.03, color_wjets.GetNumber(), color_wjets.GetNumber(), "#it{W}+jets")
         #ROOT.myBoxText(0.65,0.66 , 0.03, color_zjets.GetNumber(), color_zjets.GetNumber(), "#it{Z}+jets")
@@ -149,8 +161,9 @@ def plotting(campaign, selection, channel, stype):
         ROOT.myBoxText(0.65,0.62 , 0.03, color_tchan.GetNumber(), "#it{t}#it{q}")
         ROOT.myBoxText(0.80,0.70 , 0.03, color_ttbar.GetNumber(), "#it{t}#it{#bar{t}}")
         ROOT.myBoxText(0.80,0.66 , 0.03, color_sgtop.GetNumber(), '#it{t}#it{W}+#it{t}#it{b}')
-
         ROOT.myBoxText(0.80,0.62 , 0.03, color_diboson.GetNumber(), '#it{V}#it{V}')
+        ROOT.myBoxText(0.80,0.58 , 0.03, color_ttv.GetNumber(), '#it{ttv}')
+        #ROOT.myBoxText(0.80,0.54 , 0.03, color_lfake.GetNumber(), '#it{lfake}')
         pad1.RedrawAxis()
         pad2.cd()
         pad2.SetRightMargin(0.05)
@@ -177,7 +190,8 @@ def plotting(campaign, selection, channel, stype):
         ratio.SetLineColor(ROOT.kBlack)
         ratio.SetMarkerStyle(20)
         ratio.SetMarkerSize(1.8)
-        ratio.GetYaxis().SetRangeUser(0.5, 2.49)
+        #ratio.GetYaxis().SetRangeUser(0.5, 2.49)
+        ratio.GetYaxis().SetRangeUser(0.5, 1.6)
         ratio.Draw("E1")
         odir = "../kinPlots/{}_{}/".format(selection, channel)
         os.system("mkdir -p {}".format(odir))
@@ -242,7 +256,7 @@ def ProcYield(campaign, selection, channel, stype):
 @click.option("--merge", default="no",type=click.Choice(["yes", "no"]) ,help="Should the files be merged")
 @click.option("--campaign", required=True, type=click.Choice(["mc16a","mc16d", "mc16e", "fR2"]), help="Specify the campaign and choose between mc16[a,d,e]")
 @click.option("--nworkers", default=1, help="Specify the number of workers used for merging")
-@click.option("--selection", required=True,type=click.Choice(["4jgt1b70","4jgt1b70","1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
+@click.option("--selection", required=True,type=click.Choice(["4jgt1b77","4jgt1b70","1jgt1b77","1jgt1b70" , "4jgt1b85","4jgt1b70","1j1b70","1j1b701b85", "1j0b701b85","1j1b702b85"]), help="Specify the selection that you want to apply to retrieve the fake weights")
 @click.option("--channel", required=True, type=click.Choice(["el","mu"]),  help="Selection electron or muon channel")
 @click.option("--stype", required=True, type=click.Choice(["real","fake"]), help="Process real or fake Ntuples")
 def main(merge, campaign, nworkers, selection, channel, stype):

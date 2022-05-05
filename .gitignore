@@ -1,0 +1,8 @@
+./EfficiencyMaps/*
+./kinDists/*
+./logs/*
+./logs_merger/*
+./ohists/*
+./bin/build
+./bin/run
+backup/*
